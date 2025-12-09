@@ -20,15 +20,9 @@ export const validate =
       return;
     }
 
-    const { body, query, params } = result.data as {
-      body?: unknown;
-      query?: unknown;
-      params?: unknown;
-    };
-
+    const { body } = result.data as { body?: unknown };
+    // On ne réassigne pas req.query/req.params (non mutables en Express 5)
     req.body = body as Request["body"];
-    req.query = query as Request["query"];
-    req.params = params as Request["params"];
     next();
   };
 

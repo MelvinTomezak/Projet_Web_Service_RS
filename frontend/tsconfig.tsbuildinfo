@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/supabaseclient.ts","./src/components/shell.tsx","./src/data/mock.ts","./src/hooks/usesession.ts","./src/pages/createsubreddit.tsx","./src/pages/home.tsx","./src/pages/postdetail.tsx","./src/pages/subreddit.tsx","./src/utils/date.ts"],"errors":true,"version":"5.9.3"}

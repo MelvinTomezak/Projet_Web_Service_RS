@@ -3,22 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validate = void 0;
 // Middleware de validation générique avec Zod
 const validate = (schema) => (req, res, next) => {
-    const parsed = schema.safeParse({
+    const result = schema.safeParse({
         body: req.body,
         query: req.query,
         params: req.params,
     });
-    if (!parsed.success) {
+    if (!result.success) {
         res.status(400).json({
             code: "VALIDATION_ERROR",
             message: "Payload invalide",
-            details: parsed.error.flatten(),
+            details: result.error.flatten(),
         });
         return;
     }
-    req.body = parsed.data.body;
-    req.query = parsed.data.query;
-    req.params = parsed.data.params;
+    const { body } = result.data;
+    // On ne réassigne pas req.query/req.params (non mutables en Express 5)
+    req.body = body;
     next();
 };
 exports.validate = validate;

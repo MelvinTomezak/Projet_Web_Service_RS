@@ -31,6 +31,7 @@ exports.env = {
     requireSupabaseSecrets: () => {
         required("SUPABASE_URL");
         required("SUPABASE_ANON_KEY");
+        required("SUPABASE_SERVICE_ROLE_KEY");
         required("SUPABASE_JWT_SECRET");
     },
 };
