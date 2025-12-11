@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { comments as mockComments, posts as mockPosts, subreddits as mockSubs } from "../data/mock";
 import { formatDistanceToNow } from "../utils/date";
@@ -20,15 +20,19 @@ type DbComment = {
   author_id: string;
   content: string;
   created_at: string;
+  author_username?: string | null;
 };
 type DbSub = { id: string; name: string };
 
 export function PostDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [post, setPost] = useState<DbPost | null>(null);
   const [comments, setComments] = useState<DbComment[]>([]);
   const [sub, setSub] = useState<DbSub | null>(null);
   const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const run = async () => {
@@ -86,7 +90,31 @@ export function PostDetail(): JSX.Element {
           r/{sub.name}
         </Link>
       )}
-      <h1>{post?.title}</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <h1 style={{ margin: 0 }}>{post?.title}</h1>
+        {post && (
+          <button
+            aria-label="Supprimer le post"
+            className="pill"
+            onClick={async () => {
+              if (
+                !window.confirm("Confirmer la suppression du post ?") ||
+                !window.confirm("Dernière confirmation : supprimer ce post ?")
+              ) {
+                return;
+              }
+              try {
+                await api.delete(`/posts/${post.id}`);
+                navigate("/", { replace: true });
+              } catch (err) {
+                alert(err instanceof Error ? err.message : "Suppression impossible");
+              }
+            }}
+          >
+            🗑️
+          </button>
+        )}
+      </div>
       {post && (
         <p className="meta">
           Posté il y a {formatDistanceToNow(post.created_at)} • Score : {score(post.score)}
@@ -104,10 +132,42 @@ export function PostDetail(): JSX.Element {
         {!loading && comments.length === 0 && <p className="meta">Aucun commentaire</p>}
         {comments.map((c) => (
           <article key={c.id} className="comment">
-            <div className="meta">{formatDistanceToNow(c.created_at)}</div>
+            <div className="meta">
+              {c.author_username ?? "Anonyme"} • {formatDistanceToNow(c.created_at)}
+            </div>
             <div>{c.content}</div>
           </article>
         ))}
+      </section>
+      <section className="card" style={{ marginTop: 12 }}>
+        <h3>Ajouter un commentaire</h3>
+        <textarea
+          className="auth-input"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          rows={3}
+          placeholder="Votre commentaire"
+        />
+        <button
+          className="auth-button"
+          disabled={!newComment.trim()}
+          onClick={async () => {
+            if (!id) return;
+            setMessage(null);
+            try {
+              const created = await api.post<DbComment>(`/posts/${id}/comments`, { content: newComment.trim() });
+              setComments((prev) => [...prev, created]);
+              setNewComment("");
+              setMessage("Commentaire ajouté");
+            } catch (err) {
+              setMessage(err instanceof Error ? err.message : "Erreur");
+            }
+          }}
+          style={{ marginTop: 8 }}
+        >
+          Publier
+        </button>
+        {message && <p className="auth-message">{message}</p>}
       </section>
     </div>
   );

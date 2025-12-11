@@ -15,6 +15,10 @@ const updateSubSchema = z.object({
   }),
 });
 
+const deleteSubSchema = z.object({
+  params: z.object({ id: z.string().uuid() }),
+});
+
 /**
  * @openapi
  * /api/subreddits:
@@ -199,6 +203,38 @@ subredditsRouter.put(
       .single();
     if (error) return res.status(400).json({ code: "UPDATE_SUB_ERROR", message: error.message });
     res.json(data);
+  },
+);
+
+/**
+ * @openapi
+ * /api/subreddits/{id}:
+ *   delete:
+ *     summary: Supprimer un subreddit (owner)
+ *     security: [{ bearerAuth: [] }]
+ */
+subredditsRouter.delete(
+  "/subreddits/:id",
+  requireAuth,
+  validate(deleteSubSchema),
+  async (req: AuthenticatedRequest, res) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const roles = req.user?.roles ?? [];
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    const { data: membership } = await supabase
+      .from("sub_members")
+      .select("role")
+      .eq("subreddit_id", id)
+      .eq("user_id", userId)
+      .single();
+    const isAdmin = roles.includes("admin");
+    if (!isAdmin && (!membership || membership.role !== "owner")) {
+      return res.status(403).json({ code: "FORBIDDEN", message: "Réservé au owner" });
+    }
+    const { error } = await supabase.from("subreddits").delete().eq("id", id);
+    if (error) return res.status(400).json({ code: "DELETE_SUB_ERROR", message: error.message });
+    res.json({ ok: true });
   },
 );
 

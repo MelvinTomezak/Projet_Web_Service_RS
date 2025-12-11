@@ -35,6 +35,7 @@ export function Shell({ children }: { children: ReactNode }): JSX.Element {
           </Link>
           <Link to="/">Accueil</Link>
           <Link to="/create-subreddit">Créer un subreddit</Link>
+          <Link to="/create-post">Créer un post</Link>
         </div>
         <div className="topbar-right">
           <span className="meta">{session.user.email}</span>

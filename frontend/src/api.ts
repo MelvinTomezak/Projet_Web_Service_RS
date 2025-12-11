@@ -30,6 +30,15 @@ export const api = {
     if (!res.ok) throw new Error(`POST ${path} ${res.status}`);
     return res.json();
   },
+  async delete<T>(path: string): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    };
+    const res = await fetch(`${API}${path}`, { method: "DELETE", headers });
+    if (!res.ok) throw new Error(`DELETE ${path} ${res.status}`);
+    return res.json();
+  },
 };
 
 
