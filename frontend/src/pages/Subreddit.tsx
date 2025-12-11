@@ -57,10 +57,7 @@ export function Subreddit(): JSX.Element {
             author_id: p.author,
             title: p.title,
             content: p.content,
-<<<<<<< Updated upstream
             // media_urls: p.media_urls,
-=======
->>>>>>> Stashed changes
             score: 0,
             created_at: p.createdAt,
           }));
@@ -106,7 +103,7 @@ export function Subreddit(): JSX.Element {
         )}
       </div>
       {sub?.description && <p className="meta">{sub.description}</p>}
-      {loading && <div className="meta">Chargement...</div>}
+      {loading && <div className="meta">Loading...</div>}
       {!loading &&
         [...posts]
           .sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || Date.parse(b.created_at) - Date.parse(a.created_at))
@@ -130,7 +127,7 @@ export function Subreddit(): JSX.Element {
                         await api.delete(`/posts/${p.id}`);
                         setPosts((prev) => prev.filter((x) => x.id !== p.id));
                       } catch (err) {
-                        alert(err instanceof Error ? err.message : "Suppression impossible");
+                        alert(err instanceof Error ? err.message : "Deletion failed");
                       }
                     }}
                   >

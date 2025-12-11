@@ -104,16 +104,12 @@ export function Home() {
                   {p.title}
                 </Link>
                 <p className="content">{p.content}</p>
-<<<<<<< Updated upstream
-                <div className="meta">Score : {p.score ?? 0}</div>
-=======
                 {p.media_urls?.[0] && (
                   <div style={{ marginTop: 8 }}>
                     <img src={p.media_urls[0]} alt="media" style={{ maxWidth: "100%", borderRadius: 8 }} />
                   </div>
                 )}
                 <div className="meta">Score: {p.score ?? 0}</div>
->>>>>>> Stashed changes
               </article>
             );
           })}

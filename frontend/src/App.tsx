@@ -131,13 +131,10 @@ export function App(): JSX.Element {
           {loading ? "..." : mode === "login" ? "Sign in" : "Create account"}
         </button>
 
-<<<<<<< Updated upstream
-=======
         <button className="auth-secondary" onClick={logout}>
           Sign out
         </button>
 
->>>>>>> Stashed changes
         {message && <p className="auth-message">{message}</p>}
         <p className="meta">
           Supabase JWT token is stored client-side (session) and sent as Bearer to the backend API.

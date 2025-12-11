@@ -26,7 +26,7 @@ type DbComment = {
 type DbSub = { id: string; name: string };
 
 export function PostDetail(): JSX.Element {
-  const { id } = useParams<{ id: string }>();
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<DbPost | null>(null);
   const [comments, setComments] = useState<DbComment[]>([]);
@@ -85,26 +85,22 @@ export function PostDetail(): JSX.Element {
 
   const score = useMemo(() => (s?: number) => s ?? 0, []);
 
-<<<<<<< Updated upstream
-  const sendComment = async (e: FormEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-
-    if(!id || !commentContent.trim()) return;
-    try {
-      const newComment = await api.post<DbComment>(`/posts/${id}/comments`, {
-        content: commentContent,
-      });
-      setComments((prev) => [newComment, ...prev]);
-      setCommentContent("");
-    } catch {
-      // ignore
-    }
-  }
-
-  if (!post && !loading) return <div className="page">Post introuvable.</div>;
-=======
   if (!post && !loading) return <div className="page">Post not found.</div>;
->>>>>>> Stashed changes
+
+  const sendComment = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!id || !newComment.trim()) return;
+    setMessage(null);
+    try {
+      await api.post<DbComment>(`/posts/${id}/comments`, { content: newComment.trim() });
+      const refreshed = await api.get<DbComment[]>(`/posts/${id}/comments`);
+      setComments(refreshed);
+      setNewComment("");
+      setMessage("Comment added");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    }
+  };
 
   return (
     <div className="page">
@@ -151,34 +147,9 @@ export function PostDetail(): JSX.Element {
         </div>
       )}
       <section className="card">
-<<<<<<< Updated upstream
-        <h3>Commentaires</h3>
-        {loading && <p className="meta">Chargement...</p>}
-
-        <form>
-          <label className="auth-label">
-            Ajouter un commentaire
-            <textarea
-                    className="auth-input"
-                    rows={2}
-                    value={commentContent}
-                    onChange={(e) => setCommentContent(e.target.value)}
-            />
-          </label>
-          <button
-                  className="auth-button"
-                  onSubmit={sendComment}
-                  type="submit"
-          >
-            Envoyer
-          </button>
-        </form>
-        {!loading && comments.length === 0 && <p className="meta">Aucun commentaire</p>}
-=======
         <h3>Comments</h3>
         {loading && <p className="meta">Loading...</p>}
         {!loading && comments.length === 0 && <p className="meta">No comments</p>}
->>>>>>> Stashed changes
         {comments.map((c) => (
           <article key={c.id} className="comment">
             <div className="meta">
@@ -211,40 +182,22 @@ export function PostDetail(): JSX.Element {
           </article>
         ))}
       </section>
-<<<<<<< Updated upstream
-=======
       <section className="card" style={{ marginTop: 12 }}>
         <h3>Add a comment</h3>
-        <textarea
-          className="auth-input"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          rows={3}
-          placeholder="Your comment"
-        />
-        <button
-          className="auth-button"
-          disabled={!newComment.trim()}
-          onClick={async () => {
-            if (!id) return;
-            setMessage(null);
-            try {
-              await api.post<DbComment>(`/posts/${id}/comments`, { content: newComment.trim() });
-              const refreshed = await api.get<DbComment[]>(`/posts/${id}/comments`);
-              setComments(refreshed);
-              setNewComment("");
-              setMessage("Comment added");
-            } catch (err) {
-              setMessage(err instanceof Error ? err.message : "Error");
-            }
-          }}
-          style={{ marginTop: 8 }}
-        >
-          Publish
-        </button>
+        <form onSubmit={sendComment}>
+          <textarea
+            className="auth-input"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={3}
+            placeholder="Your comment"
+          />
+          <button className="auth-button" type="submit" disabled={!newComment.trim()} style={{ marginTop: 8 }}>
+            Publish
+          </button>
+        </form>
         {message && <p className="auth-message">{message}</p>}
       </section>
->>>>>>> Stashed changes
     </div>
   );
 }
