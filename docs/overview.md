@@ -44,3 +44,6 @@
 - Ajouter gestion join/leave depuis l’UI.
 - Enrichir Swagger (schémas d’inputs/outputs) et tests end-to-end.
 
+
+
+
