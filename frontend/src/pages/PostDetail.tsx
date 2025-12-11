@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import {FormEvent, useEffect, useMemo, useState} from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { comments as mockComments, posts as mockPosts, subreddits as mockSubs } from "../data/mock";
@@ -29,6 +29,7 @@ export function PostDetail(): JSX.Element {
   const [comments, setComments] = useState<DbComment[]>([]);
   const [sub, setSub] = useState<DbSub | null>(null);
   const [loading, setLoading] = useState(true);
+  const [commentContent, setCommentContent] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -78,6 +79,21 @@ export function PostDetail(): JSX.Element {
 
   const score = useMemo(() => (s?: number) => s ?? 0, []);
 
+  const sendComment = async (e: FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    if(!id || !commentContent.trim()) return;
+    try {
+      const newComment = await api.post<DbComment>(`/posts/${id}/comments`, {
+        content: commentContent,
+      });
+      setComments((prev) => [newComment, ...prev]);
+      setCommentContent("");
+    } catch {
+      // ignore
+    }
+  }
+
   if (!post && !loading) return <div className="page">Post introuvable.</div>;
 
   return (
@@ -103,6 +119,24 @@ export function PostDetail(): JSX.Element {
         <h3>Commentaires</h3>
         {loading && <p className="meta">Chargement...</p>}
 
+        <form>
+          <label className="auth-label">
+            Ajouter un commentaire
+            <textarea
+                    className="auth-input"
+                    rows={2}
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+            />
+          </label>
+          <button
+                  className="auth-button"
+                  onSubmit={sendComment}
+                  type="submit"
+          >
+            Envoyer
+          </button>
+        </form>
         {!loading && comments.length === 0 && <p className="meta">Aucun commentaire</p>}
         {comments.map((c) => (
           <article key={c.id} className="comment">
