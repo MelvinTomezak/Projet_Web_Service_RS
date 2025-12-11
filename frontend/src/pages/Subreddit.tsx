@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { posts as mockPosts, subreddits as mockSubs } from "../data/mock";
@@ -18,6 +18,7 @@ type DbSub = { id: string; name: string; description?: string };
 
 export function Subreddit(): JSX.Element {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [sub, setSub] = useState<DbSub | null>(null);
   const [posts, setPosts] = useState<DbPost[]>([]);
   const [title, setTitle] = useState("");
@@ -66,16 +67,59 @@ export function Subreddit(): JSX.Element {
 
   return (
     <div className="page">
-      <h1>r/{sub?.name ?? slug}</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <h1 style={{ margin: 0 }}>r/{sub?.name ?? slug}</h1>
+        {sub && (
+          <button
+            aria-label="Supprimer le subreddit"
+            className="pill"
+            onClick={async () => {
+              if (
+                !window.confirm("Confirmer la suppression du subreddit ?") ||
+                !window.confirm("Dernière confirmation : supprimer ce subreddit ?")
+              ) {
+                return;
+              }
+              try {
+                await api.delete(`/subreddits/${sub.id}`);
+                navigate("/", { replace: true });
+              } catch (err) {
+                alert(err instanceof Error ? err.message : "Suppression impossible");
+              }
+            }}
+          >
+            🗑️
+          </button>
+        )}
+      </div>
       {sub?.description && <p className="meta">{sub.description}</p>}
       {loading && <div className="meta">Chargement...</div>}
       {!loading &&
         posts.map((p) => (
           <article key={p.id} className="card">
-            <header>
-              <span className="meta">
-                Posté il y a {formatDistanceToNow(p.created_at)}
-              </span>
+            <header style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="meta">Posté il y a {formatDistanceToNow(p.created_at)}</span>
+              <button
+                aria-label="Supprimer le post"
+                className="pill"
+                style={{ marginLeft: "auto" }}
+                onClick={async () => {
+                  if (
+                    !window.confirm("Confirmer la suppression du post ?") ||
+                    !window.confirm("Dernière confirmation : supprimer ce post ?")
+                  ) {
+                    return;
+                  }
+                  try {
+                    await api.delete(`/posts/${p.id}`);
+                    setPosts((prev) => prev.filter((x) => x.id !== p.id));
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : "Suppression impossible");
+                  }
+                }}
+              >
+                🗑️
+              </button>
             </header>
             <Link to={`/posts/${p.id}`} className="title">
               {p.title}

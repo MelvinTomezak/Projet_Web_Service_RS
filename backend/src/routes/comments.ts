@@ -17,11 +17,15 @@ commentsRouter.get("/posts/:id/comments", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("comments")
-    .select("*")
+    .select("id, post_id, author_id, content, created_at, profiles(username)")
     .eq("post_id", id)
     .order("created_at", { ascending: true });
   if (error) return res.status(400).json({ code: "LIST_COMMENTS_ERROR", message: error.message });
-  res.json(data);
+  const mapped = (data ?? []).map((c) => ({
+    ...c,
+    author_username: (c as { profiles?: { username?: string } }).profiles?.username ?? null,
+  }));
+  res.json(mapped);
 });
 
 // Créer un commentaire
@@ -47,7 +51,7 @@ commentsRouter.post(
       .select()
       .single();
     if (error) return res.status(400).json({ code: "CREATE_COMMENT_ERROR", message: error.message });
-    res.json(data);
+    res.json({ ...data, author_username: req.user?.username ?? null });
   },
 );
 

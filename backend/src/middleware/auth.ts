@@ -63,7 +63,16 @@ export const requireAuth = async (
     return;
   }
 
-  req.user = { ...decoded, ...profile };
+  const { data: roleRows } = await supabase
+    .from("user_roles")
+    .select("roles(name)")
+    .eq("user_id", decoded.id);
+  const roles =
+    roleRows
+      ?.map((r) => (r as { roles?: { name?: string } }).roles?.name)
+      .filter((x): x is UserRole => Boolean(x && ["admin", "modo", "member", "owner"].includes(x))) || [];
+
+  req.user = { ...decoded, ...profile, roles };
   next();
 };
 

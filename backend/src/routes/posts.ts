@@ -41,9 +41,12 @@ postsRouter.get("/posts", async (_req, res) => {
 postsRouter.delete("/posts/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const userId = req.user?.id;
+  const roles = req.user?.roles ?? [];
   if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
   const { data: post } = await supabase.from("posts").select("author_id").eq("id", id).single();
-  if (!post || post.author_id !== userId) {
+  const isOwner = post && post.author_id === userId;
+  const isAdmin = roles.includes("admin");
+  if (!post || (!isOwner && !isAdmin)) {
     return res.status(403).json({ code: "FORBIDDEN", message: "Non autorisé à supprimer" });
   }
   const { error } = await supabase.from("posts").delete().eq("id", id);

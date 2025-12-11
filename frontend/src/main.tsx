@@ -7,6 +7,7 @@ import { Subreddit } from "./pages/Subreddit";
 import { PostDetail } from "./pages/PostDetail";
 import { Shell } from "./components/Shell";
 import { CreateSubreddit } from "./pages/CreateSubreddit";
+import { CreatePost } from "./pages/CreatePost";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -35,6 +36,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           element={
             <Shell>
               <Subreddit />
+            </Shell>
+          }
+        />
+        <Route
+          path="/create-post"
+          element={
+            <Shell>
+              <CreatePost />
             </Shell>
           }
         />

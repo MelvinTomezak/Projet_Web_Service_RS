@@ -69,13 +69,32 @@ export function Home() {
             const sub = subsById.get(p.subreddit_id);
             return (
               <article key={p.id} className="card">
-                <header>
+                <header style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button className="pill" onClick={() => navigate(`/r/${sub?.name ?? p.subreddit_id}`)}>
                     r/{sub?.name ?? p.subreddit_id}
                   </button>
-                  <span className="meta">
-                    Posté il y a {formatDistanceToNow(p.created_at)}
-                  </span>
+                  <span className="meta">Posté il y a {formatDistanceToNow(p.created_at)}</span>
+                  <button
+                    aria-label="Supprimer le post"
+                    className="pill"
+                    style={{ marginLeft: "auto" }}
+                    onClick={async () => {
+                      if (
+                        !window.confirm("Confirmer la suppression du post ?") ||
+                        !window.confirm("Dernière confirmation : supprimer ce post ?")
+                      ) {
+                        return;
+                      }
+                      try {
+                        await api.delete(`/posts/${p.id}`);
+                        setPosts((prev) => prev.filter((x) => x.id !== p.id));
+                      } catch (err) {
+                        alert(err instanceof Error ? err.message : "Suppression impossible");
+                      }
+                    }}
+                  >
+                    🗑️
+                  </button>
                 </header>
                 <Link to={`/posts/${p.id}`} className="title">
                   {p.title}
