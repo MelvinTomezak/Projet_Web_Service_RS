@@ -38,3 +38,6 @@
 - Gestion membres/roles sub (join/leave, bans) et contrôles RLS avancés.
 - Swagger/Doc API à enrichir.
 
+
+
+
