@@ -95,21 +95,9 @@ subredditsRouter.get("/subreddits/slug/:name", async (req, res) => {
 // List subreddits
 /**
  * @openapi
- * /api/subreddits/{id}:
+ * /api/subreddits:
  *   get:
- *     summary: Subreddit detail
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string, format: uuid }
+ *     summary: List all subreddits
  */
 subredditsRouter.get("/subreddits", async (_req, res) => {
   const { data, error } = await supabase.from("subreddits").select("*").order("created_at", {
@@ -120,6 +108,19 @@ subredditsRouter.get("/subreddits", async (_req, res) => {
 });
 
 // Subreddit detail by id
+/**
+ * @openapi
+ * /api/subreddits/{id}:
+ *   get:
+ *     summary: Subreddit detail
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ */
 subredditsRouter.get("/subreddits/:id", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from("subreddits").select("*").eq("id", id).single();

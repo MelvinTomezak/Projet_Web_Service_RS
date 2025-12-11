@@ -1,0 +1,346 @@
+{
+  "info": {
+    "_postman_id": "reddit-like-complete-2024",
+    "name": "Reddit-like Complete Workflow",
+    "description": "Complete workflow: Admin login → Create post → Comment → Upvote → Delete post",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Auth - Login (Supabase)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.access_token) {",
+              "        pm.environment.set('access_token', jsonData.access_token);",
+              "        console.log('Token saved:', jsonData.access_token.substring(0, 20) + '...');",
+              "    }",
+              "    if (jsonData.user && jsonData.user.id) {",
+              "        pm.environment.set('user_id', jsonData.user.id);",
+              "        console.log('User ID saved:', jsonData.user.id);",
+              "    }",
+              "} else {",
+              "    console.log('Login failed:', pm.response.code, pm.response.text());",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{supabase_anon_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{supabase_url}}/auth/v1/token?grant_type=password",
+          "host": ["{{supabase_url}}"],
+          "path": ["auth", "v1", "token"],
+          "query": [
+            {
+              "key": "grant_type",
+              "value": "password"
+            }
+          ]
+        },
+        "description": "Login as admin user. Saves access_token and user_id to environment."
+      }
+    },
+    {
+      "name": "2. Auth - Get Current User",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "me"]
+        },
+        "description": "Verify authentication and get user info with roles."
+      }
+    },
+    {
+      "name": "3. Subreddits - List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/subreddits",
+          "host": ["{{base_url}}"],
+          "path": ["subreddits"]
+        },
+        "description": "List all subreddits. Use first one or create a new one."
+      }
+    },
+    {
+      "name": "4. Subreddits - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.id) {",
+              "        pm.environment.set('subreddit_id', jsonData.id);",
+              "        console.log('Subreddit ID saved:', jsonData.id);",
+              "    }",
+              "    if (jsonData.name) {",
+              "        pm.environment.set('subreddit_slug', jsonData.name);",
+              "        console.log('Subreddit slug saved:', jsonData.name);",
+              "    }",
+              "} else {",
+              "    console.log('Create subreddit failed:', pm.response.code, pm.response.text());",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"test-{{$timestamp}}\",\n  \"description\": \"Test subreddit for workflow\",\n  \"is_private\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/subreddits",
+          "host": ["{{base_url}}"],
+          "path": ["subreddits"]
+        },
+        "description": "Create a new subreddit. Saves subreddit_id and subreddit_slug to environment."
+      }
+    },
+    {
+      "name": "5. Posts - Create in Subreddit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.id) {",
+              "        pm.environment.set('post_id', jsonData.id);",
+              "        console.log('Post ID saved:', jsonData.id);",
+              "    }",
+              "} else {",
+              "    console.log('Create post failed:', pm.response.code, pm.response.text());",
+              "    console.log('Make sure subreddit_id is set:', pm.environment.get('subreddit_id'));",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Test Post - {{$timestamp}}\",\n  \"content\": \"This is a test post created via Postman workflow.\",\n  \"type\": \"text\",\n  \"is_private\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/subreddits/{{subreddit_id}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["subreddits", "{{subreddit_id}}", "posts"]
+        },
+        "description": "Create a post in the subreddit. Saves post_id to environment."
+      }
+    },
+    {
+      "name": "6. Posts - Get Detail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Get the created post details."
+      }
+    },
+    {
+      "name": "7. Comments - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.id) {",
+              "        pm.environment.set('comment_id', jsonData.id);",
+              "        console.log('Comment ID saved:', jsonData.id);",
+              "    }",
+              "} else {",
+              "    console.log('Create comment failed:', pm.response.code, pm.response.text());",
+              "    console.log('Make sure post_id is set:', pm.environment.get('post_id'));",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"This is a test comment on the post.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/comments",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "comments"]
+        },
+        "description": "Create a comment on the post. Saves comment_id to environment."
+      }
+    },
+    {
+      "name": "8. Comments - List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/comments",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "comments"]
+        },
+        "description": "List all comments on the post."
+      }
+    },
+    {
+      "name": "9. Posts - Upvote",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"value\": 1\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/vote",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "vote"]
+        },
+        "description": "Upvote the post (value: 1). Use -1 for downvote, 0 to remove vote."
+      }
+    },
+    {
+      "name": "10. Posts - Get Detail (After Vote)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Verify the post score after voting."
+      }
+    },
+    {
+      "name": "11. Posts - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Delete the post (admin or author only)."
+      }
+    },
+    {
+      "name": "12. Posts - Verify Deletion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Verify the post was deleted (should return 404)."
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    },
+    {
+      "key": "supabase_url",
+      "value": "https://dcppfoqzklloarpuigci.supabase.co",
+      "type": "string"
+    }
+  ]
+}
+

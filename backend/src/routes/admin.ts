@@ -112,7 +112,6 @@ adminRouter.post(
  *         schema:
  *           type: string
  *           format: uuid
- *     parameters:
  *       - in: query
  *         name: role
  *         schema:
