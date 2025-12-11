@@ -1,5 +1,5 @@
 import {FormEvent, useEffect, useMemo, useState} from "react";
-import { useParams, Link } from "react-router-dom";
+import {useParams, Link, useNavigate} from "react-router-dom";
 import { api } from "../api";
 import { comments as mockComments, posts as mockPosts, subreddits as mockSubs } from "../data/mock";
 import { formatDistanceToNow } from "../utils/date";
