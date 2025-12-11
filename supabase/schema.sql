@@ -26,6 +26,63 @@ create table if not exists public.user_roles (
   primary key (user_id, role_id)
 );
 
+-- Rôles de base
+insert into public.roles (name) values ('admin'), ('member') on conflict (name) do nothing;
+
+-- Backfill des membres par défaut
+insert into public.user_roles (user_id, role_id)
+select p.id, r.id
+from public.profiles p
+join public.roles r on r.name = 'member'
+on conflict do nothing;
+
+-- Trigger : à chaque nouveau profil, attribuer 'member'
+create or replace function public.set_default_member_role()
+returns trigger
+language plpgsql
+as $$
+begin
+  insert into public.user_roles (user_id, role_id)
+  select new.id, r.id from public.roles r where r.name = 'member'
+  on conflict do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_profiles_default_role on public.profiles;
+create trigger trg_profiles_default_role
+after insert on public.profiles
+for each row execute function public.set_default_member_role();
+
+-- Création automatique du profil (et donc du rôle member via le trigger précédent)
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_username text;
+begin
+  v_username := coalesce(
+    new.raw_user_meta_data ->> 'username',
+    split_part(new.email, '@', 1),
+    'user_' || substr(new.id::text, 1, 8)
+  );
+
+  insert into public.profiles (id, username)
+  values (new.id, v_username)
+  on conflict do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_auth_user_profile on auth.users;
+create trigger trg_auth_user_profile
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 -- Subreddits et adhésions
 do $$
 begin

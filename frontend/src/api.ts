@@ -39,6 +39,19 @@ export const api = {
     if (!res.ok) throw new Error(`DELETE ${path} ${res.status}`);
     return res.json();
   },
+  async put<T>(path: string, body: unknown): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    };
+    const res = await fetch(`${API}${path}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`PUT ${path} ${res.status}`);
+    return res.json();
+  },
 };
 
 

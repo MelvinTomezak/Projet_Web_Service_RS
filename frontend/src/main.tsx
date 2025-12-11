@@ -8,6 +8,7 @@ import { PostDetail } from "./pages/PostDetail";
 import { Shell } from "./components/Shell";
 import { CreateSubreddit } from "./pages/CreateSubreddit";
 import { CreatePost } from "./pages/CreatePost";
+import { AdminUsers } from "./pages/AdminUsers";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -52,6 +53,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           element={
             <Shell>
               <PostDetail />
+            </Shell>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <Shell>
+              <AdminUsers />
             </Shell>
           }
         />

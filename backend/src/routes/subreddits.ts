@@ -23,7 +23,7 @@ const deleteSubSchema = z.object({
  * @openapi
  * /api/subreddits:
  *   post:
- *     summary: Créer un subreddit
+ *     summary: Create a subreddit
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
@@ -35,11 +35,15 @@ const deleteSubSchema = z.object({
  *               name: { type: string }
  *               description: { type: string }
  *               is_private: { type: boolean }
+ *           example:
+ *             name: "tech"
+ *             description: "Tech news and frameworks"
+ *             is_private: false
  *     responses:
  *       200:
  *         description: Subreddit créé
  *   get:
- *     summary: Lister les subreddits
+ *     summary: List subreddits
  *     responses:
  *       200: { description: OK }
  */
@@ -54,7 +58,7 @@ subredditsRouter.post(
       is_private?: boolean;
     };
     const ownerId = req.user?.id;
-    if (!ownerId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!ownerId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const { data, error } = await supabase
       .from("subreddits")
       .insert({ name, description, is_private: is_private ?? false })
@@ -69,12 +73,12 @@ subredditsRouter.post(
   },
 );
 
-// Détail via slug (name)
+// Detail via slug (name)
 /**
  * @openapi
  * /api/subreddits/slug/{name}:
  *   get:
- *     summary: Détail d'un subreddit par slug
+ *     summary: Subreddit detail by slug
  *     parameters:
  *       - in: path
  *         name: name
@@ -88,12 +92,12 @@ subredditsRouter.get("/subreddits/slug/:name", async (req, res) => {
   res.json(data);
 });
 
-// Liste des subreddits
+// List subreddits
 /**
  * @openapi
  * /api/subreddits/{id}:
  *   get:
- *     summary: Détail d'un subreddit
+ *     summary: Subreddit detail
  *     parameters:
  *       - in: path
  *         name: id
@@ -108,7 +112,7 @@ subredditsRouter.get("/subreddits", async (_req, res) => {
   res.json(data);
 });
 
-// Détail subreddit
+// Subreddit detail by id
 subredditsRouter.get("/subreddits/:id", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from("subreddits").select("*").eq("id", id).single();
@@ -116,15 +120,55 @@ subredditsRouter.get("/subreddits/:id", async (req, res) => {
   res.json(data);
 });
 
-// Posts d’un subreddit
+/**
+ * @openapi
+ * /api/subreddits/{id}/me:
+ *   get:
+ *     summary: Current user role in subreddit
+ *     security: [{ bearerAuth: [] }]
+ */
+subredditsRouter.get("/subreddits/:id/me", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
+  const { data, error } = await supabase
+    .from("sub_members")
+    .select("role")
+    .eq("subreddit_id", id)
+    .eq("user_id", userId)
+    .single();
+  if (error && error.code !== "PGRST116") {
+    return res.status(400).json({ code: "MEMBERSHIP_ERROR", message: error.message });
+  }
+  res.json({ role: data?.role ?? null });
+});
+
+// Subreddit posts
 /**
  * @openapi
  * /api/subreddits/{id}/posts:
  *   get:
- *     summary: Posts d'un subreddit
+ *     summary: Posts of a subreddit
  *   post:
- *     summary: Créer un post dans un subreddit
+ *     summary: Create a post in subreddit
  *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               type: { type: string, enum: [text, link, image] }
+ *               media_urls:
+ *                 type: array
+ *                 items: { type: string, format: uri }
+ *           example:
+ *             title: "My first post"
+ *             content: "Hello subreddit!"
+ *             type: "text"
  */
 subredditsRouter.get("/subreddits/:id/posts", async (req, res) => {
   const { id } = req.params;
@@ -132,6 +176,7 @@ subredditsRouter.get("/subreddits/:id/posts", async (req, res) => {
     .from("posts")
     .select("*")
     .eq("subreddit_id", id)
+    .order("score", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) return res.status(400).json({ code: "LIST_POSTS_ERROR", message: error.message });
   res.json(data);
@@ -145,7 +190,7 @@ subredditsRouter.post(
   async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const { title, content, type, media_urls } = req.body as {
       title: string;
       content: string;
@@ -169,12 +214,12 @@ subredditsRouter.post(
   },
 );
 
-// Mettre à jour un subreddit (owner)
+// Update subreddit (owner)
 /**
  * @openapi
  * /api/subreddits/{id}:
  *   put:
- *     summary: Mettre à jour un subreddit (owner)
+ *     summary: Update subreddit (owner)
  *     security: [{ bearerAuth: [] }]
  */
 subredditsRouter.put(
@@ -184,7 +229,7 @@ subredditsRouter.put(
   async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const { data: membership } = await supabase
       .from("sub_members")
       .select("role")
@@ -192,7 +237,7 @@ subredditsRouter.put(
       .eq("user_id", userId)
       .single();
     if (!membership || membership.role !== "owner") {
-      return res.status(403).json({ code: "FORBIDDEN", message: "Réservé au owner" });
+      return res.status(403).json({ code: "FORBIDDEN", message: "Owner only" });
     }
     const { description, is_private } = req.body as { description?: string; is_private?: boolean };
     const { data, error } = await supabase
@@ -238,18 +283,18 @@ subredditsRouter.delete(
   },
 );
 
-// Rejoindre un subreddit
+// Join subreddit
 /**
  * @openapi
  * /api/subreddits/{id}/join:
  *   post:
- *     summary: Rejoindre un subreddit
+ *     summary: Join a subreddit
  *     security: [{ bearerAuth: [] }]
  */
 subredditsRouter.post("/subreddits/:id/join", requireAuth, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const userId = req.user?.id;
-  if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+  if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
   const { error } = await supabase
     .from("sub_members")
     .upsert({ user_id: userId, subreddit_id: id, role: "member" }, { onConflict: "user_id,subreddit_id" });
@@ -257,12 +302,12 @@ subredditsRouter.post("/subreddits/:id/join", requireAuth, async (req: Authentic
   res.json({ ok: true });
 });
 
-// Quitter un subreddit
+// Leave subreddit
 /**
  * @openapi
  * /api/subreddits/{id}/leave:
  *   post:
- *     summary: Quitter un subreddit
+ *     summary: Leave a subreddit
  *     security: [{ bearerAuth: [] }]
  */
 subredditsRouter.post(
@@ -271,7 +316,7 @@ subredditsRouter.post(
   async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const { error } = await supabase
       .from("sub_members")
       .delete()
@@ -282,12 +327,12 @@ subredditsRouter.post(
   },
 );
 
-// Liste des membres (owner ou mod)
+// Members list (owner/mod)
 /**
  * @openapi
  * /api/subreddits/{id}/members:
  *   get:
- *     summary: Lister les membres d'un subreddit (owner/mod)
+ *     summary: List subreddit members (owner/mod)
  *     security: [{ bearerAuth: [] }]
  */
 subredditsRouter.get(
@@ -296,7 +341,7 @@ subredditsRouter.get(
   async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const { data: membership } = await supabase
       .from("sub_members")
       .select("role")
@@ -304,7 +349,7 @@ subredditsRouter.get(
       .eq("user_id", userId)
       .single();
     if (!membership || !["owner", "mod"].includes(membership.role)) {
-      return res.status(403).json({ code: "FORBIDDEN", message: "Réservé aux mods/owner" });
+      return res.status(403).json({ code: "FORBIDDEN", message: "Owner or moderator only" });
     }
     const { data, error } = await supabase
       .from("sub_members")
@@ -314,12 +359,12 @@ subredditsRouter.get(
   },
 );
 
-// Changer le rôle d’un membre (owner uniquement)
+// Change member role (owner only)
 /**
  * @openapi
  * /api/subreddits/{id}/members/{userId}/role:
  *   post:
- *     summary: Mettre à jour le rôle d'un membre (owner)
+ *     summary: Update a member role (owner)
  *     security: [{ bearerAuth: [] }]
  */
 subredditsRouter.post(
@@ -328,10 +373,10 @@ subredditsRouter.post(
   async (req: AuthenticatedRequest, res) => {
     const { id, userId } = req.params;
     const currentUser = req.user?.id;
-    if (!currentUser) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!currentUser) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
     const role = (req.body?.role as string) ?? "";
     if (!["member", "mod"].includes(role)) {
-      return res.status(400).json({ code: "ROLE_INVALID", message: "role doit être member ou mod" });
+      return res.status(400).json({ code: "ROLE_INVALID", message: "role must be member or mod" });
     }
     const { data: membership } = await supabase
       .from("sub_members")
@@ -340,7 +385,7 @@ subredditsRouter.post(
       .eq("user_id", currentUser)
       .single();
     if (!membership || membership.role !== "owner") {
-      return res.status(403).json({ code: "FORBIDDEN", message: "Réservé au owner" });
+      return res.status(403).json({ code: "FORBIDDEN", message: "Owner only" });
     }
     const { error } = await supabase
       .from("sub_members")

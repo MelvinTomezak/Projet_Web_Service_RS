@@ -41,13 +41,13 @@ export const requireAuth = async (
 ): Promise<void> => {
   const token = bearer(req.headers.authorization || null);
   if (!token) {
-    res.status(401).json({ code: "UNAUTHORIZED", message: "Token manquant" });
+    res.status(401).json({ code: "UNAUTHORIZED", message: "Missing token" });
     return;
   }
 
   const decoded = decodeToken(token);
   if (!decoded) {
-    res.status(401).json({ code: "UNAUTHORIZED", message: "Token invalide" });
+    res.status(401).json({ code: "UNAUTHORIZED", message: "Invalid token" });
     return;
   }
 
@@ -59,20 +59,29 @@ export const requireAuth = async (
     .single();
 
   if (error || !profile) {
-    res.status(401).json({ code: "UNAUTHORIZED", message: "Utilisateur introuvable" });
+    res.status(401).json({ code: "UNAUTHORIZED", message: "User not found" });
     return;
   }
 
   const { data: roleRows } = await supabase
     .from("user_roles")
-    .select("roles(name)")
+    .select("role_id, roles(id,name)")
     .eq("user_id", decoded.id);
-  const roles =
+  let roles =
     roleRows
       ?.map((r) => (r as { roles?: { name?: string } }).roles?.name)
       .filter((x): x is UserRole => Boolean(x && ["admin", "modo", "member", "owner"].includes(x))) || [];
 
-  req.user = { ...decoded, ...profile, roles };
+  // Si aucun rôle, on assigne dynamiquement member pour l'utilisateur courant
+  if (!roles.length) {
+    const { data: memberRole } = await supabase.from("roles").select("id").eq("name", "member").single();
+    if (memberRole?.id) {
+      await supabase.from("user_roles").insert({ user_id: decoded.id, role_id: memberRole.id }).select().single();
+      roles = ["member"];
+    }
+  }
+
+  req.user = { ...decoded, ...profile, roles: roles.length ? roles : ["member"] };
   next();
 };
 

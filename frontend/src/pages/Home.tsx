@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { posts as mockPosts, subreddits as mockSubs } from "../data/mock";
 import { formatDistanceToNow } from "../utils/date";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 type DbPost = {
   id: string;
@@ -23,6 +24,7 @@ export function Home() {
   const [posts, setPosts] = useState<DbPost[]>([]);
   const [subs, setSubs] = useState<DbSub[]>([]);
   const [loading, setLoading] = useState(true);
+  const { userId, roles } = useCurrentUser();
 
   useEffect(() => {
     const init = async () => {
@@ -60,11 +62,11 @@ export function Home() {
 
   return (
     <div className="page">
-      <h1>Fil d’actualité</h1>
+      <h1>News feed</h1>
       <div className="grid">
         <div className="feed">
-          {loading && <div className="meta">Chargement...</div>}
-          {!loading && displayPosts.length === 0 && <div className="meta">Aucun post.</div>}
+          {loading && <div className="meta">Loading...</div>}
+          {!loading && displayPosts.length === 0 && <div className="meta">No posts.</div>}
           {displayPosts.map((p) => {
             const sub = subsById.get(p.subreddit_id);
             return (
@@ -73,34 +75,45 @@ export function Home() {
                   <button className="pill" onClick={() => navigate(`/r/${sub?.name ?? p.subreddit_id}`)}>
                     r/{sub?.name ?? p.subreddit_id}
                   </button>
-                  <span className="meta">Posté il y a {formatDistanceToNow(p.created_at)}</span>
-                  <button
-                    aria-label="Supprimer le post"
-                    className="pill"
-                    style={{ marginLeft: "auto" }}
-                    onClick={async () => {
-                      if (
-                        !window.confirm("Confirmer la suppression du post ?") ||
-                        !window.confirm("Dernière confirmation : supprimer ce post ?")
-                      ) {
-                        return;
-                      }
-                      try {
-                        await api.delete(`/posts/${p.id}`);
-                        setPosts((prev) => prev.filter((x) => x.id !== p.id));
-                      } catch (err) {
-                        alert(err instanceof Error ? err.message : "Suppression impossible");
-                      }
-                    }}
-                  >
-                    🗑️
-                  </button>
+                  <span className="meta">Posted {formatDistanceToNow(p.created_at)} ago</span>
+                  {(roles.includes("admin") || p.author_id === userId) && (
+                    <button
+                      aria-label="Delete post"
+                      className="pill"
+                      style={{ marginLeft: "auto" }}
+                      onClick={async () => {
+                        if (
+                          !window.confirm("Confirm post deletion?") ||
+                          !window.confirm("Final confirmation: delete this post?")
+                        ) {
+                          return;
+                        }
+                        try {
+                          await api.delete(`/posts/${p.id}`);
+                          setPosts((prev) => prev.filter((x) => x.id !== p.id));
+                        } catch (err) {
+                          alert(err instanceof Error ? err.message : "Deletion failed");
+                        }
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </header>
                 <Link to={`/posts/${p.id}`} className="title">
                   {p.title}
                 </Link>
                 <p className="content">{p.content}</p>
+<<<<<<< Updated upstream
                 <div className="meta">Score : {p.score ?? 0}</div>
+=======
+                {p.media_urls?.[0] && (
+                  <div style={{ marginTop: 8 }}>
+                    <img src={p.media_urls[0]} alt="media" style={{ maxWidth: "100%", borderRadius: 8 }} />
+                  </div>
+                )}
+                <div className="meta">Score: {p.score ?? 0}</div>
+>>>>>>> Stashed changes
               </article>
             );
           })}

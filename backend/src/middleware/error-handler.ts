@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 
-// 404 pour les routes non trouvées
+// 404 handler
 export const notFoundHandler = (_req: Request, res: Response): void => {
   res.status(404).json({
     code: "NOT_FOUND",
-    message: "Route non trouvée",
+    message: "Route not found",
   });
 };
 
-// Gestion centralisée des erreurs
+// Centralized error handling
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const errorHandler = (
   err: any,
@@ -18,7 +18,7 @@ export const errorHandler = (
 ): void => {
   const status = err.status || 500;
   const code = err.code || "INTERNAL_ERROR";
-  const message = err.message || "Erreur interne du serveur";
+  const message = err.message || "Internal server error";
 
   res.status(status).json({
     code,

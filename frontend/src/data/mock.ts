@@ -23,17 +23,17 @@ export type Subreddit = {
 };
 
 export const subreddits: Subreddit[] = [
-  { slug: "tech", title: "Tech", description: "Actualités et technologies" },
-  { slug: "gaming", title: "Gaming", description: "Jeux vidéo et e-sport" },
-  { slug: "news", title: "News", description: "Actualités générales" },
+  { slug: "tech", title: "Tech", description: "Tech news and discussions" },
+  { slug: "gaming", title: "Gaming", description: "Video games and esports" },
+  { slug: "news", title: "News", description: "General news" },
 ];
 
 export const posts: Post[] = [
   {
     id: "p1",
     subreddit: "tech",
-    title: "Nouveau framework JS",
-    content: "Un nouveau framework prometteur vient de sortir...",
+    title: "New JS framework",
+    content: "A promising new framework just dropped...",
     author: "alice",
     votes: [{ userId: "u1", value: 1 }],
     createdAt: "2025-12-01T10:00:00Z",
@@ -42,7 +42,7 @@ export const posts: Post[] = [
     id: "p2",
     subreddit: "gaming",
     title: "Patch notes 1.2",
-    content: "Équilibrage des classes et nouvelles cartes.",
+    content: "Class balance and new maps.",
     author: "bob",
     votes: [
       { userId: "u1", value: 1 },
@@ -53,8 +53,8 @@ export const posts: Post[] = [
   {
     id: "p3",
     subreddit: "news",
-    title: "Événement mondial",
-    content: "Un fait marquant s'est produit aujourd'hui...",
+    title: "Global event",
+    content: "A major event happened today...",
     author: "carol",
     votes: [],
     createdAt: "2025-12-03T09:30:00Z",
@@ -66,7 +66,7 @@ export const comments: Comment[] = [
     id: "c1",
     postId: "p1",
     author: "bob",
-    content: "Intéressant, hâte d'essayer.",
+    content: "Interesting, can’t wait to try it.",
     votes: [{ userId: "u2", value: 1 }],
     createdAt: "2025-12-01T11:00:00Z",
   },
@@ -74,7 +74,7 @@ export const comments: Comment[] = [
     id: "c2",
     postId: "p2",
     author: "carol",
-    content: "Le patch corrige enfin le bug critique.",
+    content: "The patch finally fixes the critical bug.",
     votes: [],
     createdAt: "2025-12-02T13:00:00Z",
   },

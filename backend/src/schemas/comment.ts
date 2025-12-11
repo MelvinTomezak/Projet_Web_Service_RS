@@ -10,6 +10,12 @@ export const createCommentSchema = z.object({
   }),
 });
 
+export const deleteCommentSchema = z.object({
+  params: z.object({
+    id: z.string().uuid(), // comment id
+  }),
+});
+
 export const voteCommentSchema = z.object({
   params: z.object({
     id: z.string().uuid(), // comment id

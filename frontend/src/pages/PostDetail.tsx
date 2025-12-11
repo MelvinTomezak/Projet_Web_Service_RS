@@ -3,6 +3,7 @@ import {useParams, Link, useNavigate} from "react-router-dom";
 import { api } from "../api";
 import { comments as mockComments, posts as mockPosts, subreddits as mockSubs } from "../data/mock";
 import { formatDistanceToNow } from "../utils/date";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 type DbPost = {
   id: string;
@@ -34,6 +35,7 @@ export function PostDetail(): JSX.Element {
   const [commentContent, setCommentContent] = useState("");
   const [newComment, setNewComment] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const { userId, roles } = useCurrentUser();
 
   useEffect(() => {
     const init = async () => {
@@ -83,6 +85,7 @@ export function PostDetail(): JSX.Element {
 
   const score = useMemo(() => (s?: number) => s ?? 0, []);
 
+<<<<<<< Updated upstream
   const sendComment = async (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
@@ -99,6 +102,9 @@ export function PostDetail(): JSX.Element {
   }
 
   if (!post && !loading) return <div className="page">Post introuvable.</div>;
+=======
+  if (!post && !loading) return <div className="page">Post not found.</div>;
+>>>>>>> Stashed changes
 
   return (
     <div className="page">
@@ -109,14 +115,14 @@ export function PostDetail(): JSX.Element {
       )}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <h1 style={{ margin: 0 }}>{post?.title}</h1>
-        {post && (
+        {post && (roles.includes("admin") || post.author_id === userId) && (
           <button
-            aria-label="Supprimer le post"
+            aria-label="Delete post"
             className="pill"
             onClick={async () => {
               if (
-                !window.confirm("Confirmer la suppression du post ?") ||
-                !window.confirm("Dernière confirmation : supprimer ce post ?")
+                !window.confirm("Confirm post deletion?") ||
+                !window.confirm("Final confirmation: delete this post?")
               ) {
                 return;
               }
@@ -134,9 +140,10 @@ export function PostDetail(): JSX.Element {
       </div>
       {post && (
         <p className="meta">
-          Posté il y a {formatDistanceToNow(post.created_at)} • Score : {score(post.score)}
+          Posted {formatDistanceToNow(post.created_at)} ago • Score: {score(post.score)}
         </p>
       )}
+      {post && <p className="meta">Current score: {score(post.score)}</p>}
       <p className="content">{post?.content}</p>
       {post?.media_urls?.[0] && (
         <div style={{ marginTop: 8 }}>
@@ -144,6 +151,7 @@ export function PostDetail(): JSX.Element {
         </div>
       )}
       <section className="card">
+<<<<<<< Updated upstream
         <h3>Commentaires</h3>
         {loading && <p className="meta">Chargement...</p>}
 
@@ -166,15 +174,77 @@ export function PostDetail(): JSX.Element {
           </button>
         </form>
         {!loading && comments.length === 0 && <p className="meta">Aucun commentaire</p>}
+=======
+        <h3>Comments</h3>
+        {loading && <p className="meta">Loading...</p>}
+        {!loading && comments.length === 0 && <p className="meta">No comments</p>}
+>>>>>>> Stashed changes
         {comments.map((c) => (
           <article key={c.id} className="comment">
             <div className="meta">
-              {c.author_username ?? "Anonyme"} • {formatDistanceToNow(c.created_at)}
+              {c.author_username ?? "Anonymous"} • {formatDistanceToNow(c.created_at)}
             </div>
             <div>{c.content}</div>
+            {(roles.includes("admin") || c.author_id === userId) && (
+              <button
+                className="pill"
+                style={{ marginTop: 6 }}
+                onClick={async () => {
+                  if (
+                    !window.confirm("Confirm comment deletion?") ||
+                    !window.confirm("Final confirmation: delete this comment?")
+                  ) {
+                    return;
+                  }
+                  try {
+                    await api.delete(`/comments/${c.id}`);
+                    const refreshed = await api.get<DbComment[]>(`/posts/${id}/comments`);
+                    setComments(refreshed);
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : "Deletion failed");
+                  }
+                }}
+              >
+                🗑️
+              </button>
+            )}
           </article>
         ))}
       </section>
+<<<<<<< Updated upstream
+=======
+      <section className="card" style={{ marginTop: 12 }}>
+        <h3>Add a comment</h3>
+        <textarea
+          className="auth-input"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          rows={3}
+          placeholder="Your comment"
+        />
+        <button
+          className="auth-button"
+          disabled={!newComment.trim()}
+          onClick={async () => {
+            if (!id) return;
+            setMessage(null);
+            try {
+              await api.post<DbComment>(`/posts/${id}/comments`, { content: newComment.trim() });
+              const refreshed = await api.get<DbComment[]>(`/posts/${id}/comments`);
+              setComments(refreshed);
+              setNewComment("");
+              setMessage("Comment added");
+            } catch (err) {
+              setMessage(err instanceof Error ? err.message : "Error");
+            }
+          }}
+          style={{ marginTop: 8 }}
+        >
+          Publish
+        </button>
+        {message && <p className="auth-message">{message}</p>}
+      </section>
+>>>>>>> Stashed changes
     </div>
   );
 }

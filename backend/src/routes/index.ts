@@ -4,6 +4,7 @@ import { authRouter } from "./auth";
 import { subredditsRouter } from "./subreddits";
 import { postsRouter } from "./posts";
 import { commentsRouter } from "./comments";
+import { adminRouter } from "./admin";
 
 export const router = Router();
 
@@ -12,4 +13,5 @@ router.use(authRouter);
 router.use(subredditsRouter);
 router.use(postsRouter);
 router.use(commentsRouter);
+router.use(adminRouter);
 

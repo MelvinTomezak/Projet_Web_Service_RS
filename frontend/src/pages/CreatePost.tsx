@@ -23,7 +23,7 @@ export function CreatePost(): JSX.Element {
         setSubs(data);
         if (data[0]) setSubredditId(data[0].id);
       } catch (err) {
-        setMessage(err instanceof Error ? err.message : "Erreur lors du chargement des subreddits");
+      setMessage(err instanceof Error ? err.message : "Error while loading subreddits");
       } finally {
         setLoadingSubs(false);
       }
@@ -44,10 +44,10 @@ export function CreatePost(): JSX.Element {
         type: "text",
         is_private: isPrivate,
       });
-      setMessage("Post créé avec succès.");
+      setMessage("Post created successfully.");
       navigate(`/posts/${created.id}`);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Erreur lors de la création du post");
+      setMessage(err instanceof Error ? err.message : "Error while creating the post");
     } finally {
       setSubmitting(false);
     }
@@ -55,26 +55,26 @@ export function CreatePost(): JSX.Element {
 
   return (
     <div className="page">
-      <h1>Créer un post</h1>
+      <h1>Create a post</h1>
       <div className="card" style={{ maxWidth: 640 }}>
-        {loadingSubs && <div className="meta">Chargement des subreddits...</div>}
+        {loadingSubs && <div className="meta">Loading subreddits...</div>}
         {!loadingSubs && subs.length === 0 && (
-          <div className="meta">Aucun subreddit disponible. Créez-en un avant de poster.</div>
+          <div className="meta">No subreddit available. Create one before posting.</div>
         )}
         {!loadingSubs && subs.length > 0 && (
           <>
             <label className="auth-label">
-              Nom du post
+              Post title
               <input
                 className="auth-input"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Titre"
+                placeholder="Title"
                 required
               />
             </label>
             <label className="auth-label">
-              Contenu
+              Content
               <textarea
                 className="auth-input"
                 value={content}
@@ -105,10 +105,10 @@ export function CreatePost(): JSX.Element {
                 onChange={(e) => setIsPrivate(e.target.checked)}
                 style={{ width: "auto" }}
               />
-              Post privé
+              Private post
             </label>
             <button className="auth-button" onClick={handleSubmit} disabled={!canSubmit}>
-              {submitting ? "Envoi..." : "Publier"}
+              {submitting ? "Sending..." : "Publish"}
             </button>
           </>
         )}

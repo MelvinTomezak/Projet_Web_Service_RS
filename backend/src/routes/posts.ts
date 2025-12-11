@@ -14,6 +14,10 @@ export const postsRouter = Router();
  * /api/posts:
  *   get:
  *     summary: Feed global des posts
+ * /api/posts/{id}/vote:
+ *   post:
+ *     summary: Voter sur un post (-1,0,1)
+ *     security: [{ bearerAuth: [] }]
  */
 postsRouter.get("/posts/:id", async (req, res) => {
   const { id } = req.params;
@@ -47,7 +51,7 @@ postsRouter.delete("/posts/:id", requireAuth, async (req: AuthenticatedRequest, 
   const isOwner = post && post.author_id === userId;
   const isAdmin = roles.includes("admin");
   if (!post || (!isOwner && !isAdmin)) {
-    return res.status(403).json({ code: "FORBIDDEN", message: "Non autorisé à supprimer" });
+    return res.status(403).json({ code: "FORBIDDEN", message: "Not allowed to delete" });
   }
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) return res.status(400).json({ code: "DELETE_POST_ERROR", message: error.message });
@@ -60,6 +64,18 @@ postsRouter.delete("/posts/:id", requireAuth, async (req: AuthenticatedRequest, 
  *   post:
  *     summary: Voter sur un post
  *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               value:
+ *                 type: integer
+ *                 enum: [-1, 0, 1]
+ *           example:
+ *             value: 1
  */
 postsRouter.post(
   "/posts/:id/vote",
@@ -69,12 +85,17 @@ postsRouter.post(
     const { id } = req.params;
     const userId = req.user?.id;
     const { value } = req.body as { value: number };
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Non authentifié" });
+    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
-    const { error } = await supabase
-      .from("post_votes")
-      .upsert({ user_id: userId, post_id: id, value }, { onConflict: "user_id,post_id" });
-    if (error) return res.status(400).json({ code: "VOTE_ERROR", message: error.message });
+    if (value === 0) {
+      const { error: delError } = await supabase.from("post_votes").delete().eq("user_id", userId).eq("post_id", id);
+      if (delError) return res.status(400).json({ code: "VOTE_ERROR", message: delError.message });
+    } else {
+      const { error } = await supabase
+        .from("post_votes")
+        .upsert({ user_id: userId, post_id: id, value }, { onConflict: "user_id,post_id" });
+      if (error) return res.status(400).json({ code: "VOTE_ERROR", message: error.message });
+    }
     const { data: agg } = await supabase
       .from("post_votes")
       .select("value")

@@ -1,7 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
 import { supabase } from "../supabaseClient";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { api } from "../api";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export function Shell({ children }: { children: ReactNode }): JSX.Element {
   const { session, loading } = useSession();
@@ -10,15 +12,29 @@ export function Shell({ children }: { children: ReactNode }): JSX.Element {
   const [flash, setFlash] = useState<string | null>(
     (location.state as { message?: string } | undefined)?.message ?? null,
   );
+  const [roles, setRoles] = useState<string[]>([]);
+  const { userId, username, loading: loadingUser } = useCurrentUser();
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const me = await api.get<{ user?: { roles?: string[] } }>("/auth/me");
+        setRoles(me.user?.roles ?? []);
+      } catch {
+        setRoles([]);
+      }
+    };
+    if (session) void loadRoles();
+  }, [session]);
 
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut();
-    setFlash("Vous êtes déconnecté");
-    navigate("/login", { state: { message: "Vous êtes déconnecté" }, replace: true });
+    setFlash("You are signed out");
+    navigate("/login", { state: { message: "You are signed out" }, replace: true });
   };
 
   if (loading) {
-    return <div className="page meta">Chargement de la session...</div>;
+    return <div className="page meta">Loading session...</div>;
   }
 
   if (!session) {
@@ -33,14 +49,18 @@ export function Shell({ children }: { children: ReactNode }): JSX.Element {
           <Link to="/" className="brand">
             Reddit-like
           </Link>
-          <Link to="/">Accueil</Link>
-          <Link to="/create-subreddit">Créer un subreddit</Link>
-          <Link to="/create-post">Créer un post</Link>
+          <Link to="/">Home</Link>
+          <Link to="/create-subreddit">Create subreddit</Link>
+          <Link to="/create-post">Create post</Link>
+          {roles.includes("admin") && <Link to="/admin">Admin</Link>}
         </div>
         <div className="topbar-right">
-          <span className="meta">{session.user.email}</span>
+          <span className="meta">
+            {username ?? session.user.email} {roles.length > 0 && `• ${roles.join(", ")}`}
+            {loadingUser && " (loading...)"}
+          </span>
           <button className="auth-secondary" onClick={logout}>
-            Se déconnecter
+            Sign out
           </button>
         </div>
       </header>

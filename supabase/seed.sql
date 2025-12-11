@@ -86,21 +86,7 @@ create table if not exists public.comment_votes (
   primary key (user_id, comment_id)
 );
 
--- Users connus (inscrits via Supabase Auth)
--- Remplace par tes propres ids si nécessaire
-with users as (
-  select *
-  from (
-    values
-      ('240c97f4-b382-4e67-b65e-0ca76eb32785'::uuid, 'alice'),
-      ('98d90d05-3877-4a30-8c2c-10b939ec4cc4'::uuid, 'bob')
-  ) as t(id, username)
-)
-insert into public.profiles (id, username)
-select id, username from users
-on conflict (id) do nothing;
-
--- Subreddits
+-- Subreddits de base
 insert into public.subreddits (id, name, description, is_private)
 values
   ('00000000-0000-0000-0000-000000000001', 'tech', 'Tech et dev', false),
@@ -108,54 +94,70 @@ values
   ('00000000-0000-0000-0000-000000000003', 'news', 'Actualités générales', false)
 on conflict (id) do nothing;
 
--- Membres (owners)
-insert into public.sub_members (user_id, subreddit_id, role)
-values
-  ('240c97f4-b382-4e67-b65e-0ca76eb32785', '00000000-0000-0000-0000-000000000001', 'owner'),
-  ('98d90d05-3877-4a30-8c2c-10b939ec4cc4', '00000000-0000-0000-0000-000000000002', 'owner')
-on conflict do nothing;
+-- Seed dynamique basé sur les utilisateurs réellement inscrits (profiles)
+-- Il faut au moins 2 users dans public.profiles (créés via Supabase Auth)
+do $$
+declare
+  u1 uuid;
+  u2 uuid;
+begin
+  select id into u1 from public.profiles order by created_at asc limit 1;
+  select id into u2 from public.profiles order by created_at asc offset 1 limit 1;
 
--- Mods / members supplémentaires
-insert into public.sub_members (user_id, subreddit_id, role) values
-  ('98d90d05-3877-4a30-8c2c-10b939ec4cc4', '00000000-0000-0000-0000-000000000001', 'mod'),
-  ('240c97f4-b382-4e67-b65e-0ca76eb32785', '00000000-0000-0000-0000-000000000002', 'mod'),
-  ('240c97f4-b382-4e67-b65e-0ca76eb32785', '00000000-0000-0000-0000-000000000003', 'member'),
-  ('98d90d05-3877-4a30-8c2c-10b939ec4cc4', '00000000-0000-0000-0000-000000000003', 'member')
-on conflict do nothing;
+  if u1 is null or u2 is null then
+    raise notice 'Seed posts/comments sauté : il faut au moins 2 utilisateurs dans public.profiles';
+    return;
+  end if;
 
--- Posts
-insert into public.posts (id, subreddit_id, author_id, title, content, type, created_at)
-values
-  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001',
-    '240c97f4-b382-4e67-b65e-0ca76eb32785', 'Nouveau framework JS', 'Un nouveau framework prometteur...', 'text', now() - interval '2 day'),
-  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000002',
-    '98d90d05-3877-4a30-8c2c-10b939ec4cc4', 'Patch notes 1.2', 'Équilibrage des classes.', 'text', now() - interval '1 day'),
-  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000003',
-    '240c97f4-b382-4e67-b65e-0ca76eb32785', 'Événement mondial', 'Un fait marquant aujourd''hui...', 'text', now() - interval '5 hour')
-on conflict (id) do nothing;
+  -- Membres (owners)
+  insert into public.sub_members (user_id, subreddit_id, role) values
+    (u1, '00000000-0000-0000-0000-000000000001', 'owner'),
+    (u2, '00000000-0000-0000-0000-000000000002', 'owner')
+  on conflict do nothing;
 
--- Votes posts
-insert into public.post_votes (user_id, post_id, value) values
-  ('98d90d05-3877-4a30-8c2c-10b939ec4cc4', '11111111-1111-1111-1111-111111111111', 1),
-  ('240c97f4-b382-4e67-b65e-0ca76eb32785', '22222222-2222-2222-2222-222222222222', 1)
-on conflict do nothing;
+  -- Mods / members supplémentaires
+  insert into public.sub_members (user_id, subreddit_id, role) values
+    (u2, '00000000-0000-0000-0000-000000000001', 'mod'),
+    (u1, '00000000-0000-0000-0000-000000000002', 'mod'),
+    (u1, '00000000-0000-0000-0000-000000000003', 'member'),
+    (u2, '00000000-0000-0000-0000-000000000003', 'member')
+  on conflict do nothing;
 
--- Recalcule score
-update public.posts
-set score = coalesce((
-  select sum(value) from public.post_votes where post_id = posts.id
-), 0);
+  -- Posts (nouvelles IDs générées)
+  insert into public.posts (subreddit_id, author_id, title, content, type, created_at) values
+    ('00000000-0000-0000-0000-000000000001', u1, 'Nouveau framework JS', 'Un nouveau framework prometteur...', 'text', now() - interval '2 day'),
+    ('00000000-0000-0000-0000-000000000002', u2, 'Patch notes 1.2', 'Équilibrage des classes.', 'text', now() - interval '1 day'),
+    ('00000000-0000-0000-0000-000000000003', u1, 'Événement mondial', 'Un fait marquant aujourd''hui...', 'text', now() - interval '5 hour')
+  on conflict do nothing;
 
--- Commentaires
-insert into public.comments (id, post_id, author_id, content, created_at) values
-  ('44444444-4444-4444-4444-444444444444', '11111111-1111-1111-1111-111111111111',
-    '98d90d05-3877-4a30-8c2c-10b939ec4cc4', 'Hâte d''essayer.', now() - interval '1 day'),
-  ('55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222',
-    '240c97f4-b382-4e67-b65e-0ca76eb32785', 'Merci pour le patch.', now() - interval '8 hour')
-on conflict do nothing;
+  -- Votes posts (optionnel)
+  insert into public.post_votes (user_id, post_id, value)
+  select u2, p.id, 1 from public.posts p where p.title = 'Nouveau framework JS'
+  on conflict do nothing;
+  insert into public.post_votes (user_id, post_id, value)
+  select u1, p.id, 1 from public.posts p where p.title = 'Patch notes 1.2'
+  on conflict do nothing;
 
--- Votes commentaires
-insert into public.comment_votes (user_id, comment_id, value) values
-  ('240c97f4-b382-4e67-b65e-0ca76eb32785', '44444444-4444-4444-4444-444444444444', 1)
-on conflict do nothing;
+  -- Recalcule score
+  update public.posts
+  set score = coalesce((
+    select sum(value) from public.post_votes where post_id = posts.id
+  ), 0);
+
+  -- Commentaires
+  insert into public.comments (post_id, author_id, content, created_at)
+  select p.id, u2, 'Hâte d''essayer.', now() - interval '1 day'
+  from public.posts p where p.title = 'Nouveau framework JS'
+  on conflict do nothing;
+
+  insert into public.comments (post_id, author_id, content, created_at)
+  select p.id, u1, 'Merci pour le patch.', now() - interval '8 hour'
+  from public.posts p where p.title = 'Patch notes 1.2'
+  on conflict do nothing;
+
+  -- Votes commentaires
+  insert into public.comment_votes (user_id, comment_id, value)
+  select u1, c.id, 1 from public.comments c where c.content like 'Hâte d''essayer.%'
+  on conflict do nothing;
+end $$;
 

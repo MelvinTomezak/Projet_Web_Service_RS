@@ -1,0 +1,241 @@
+{
+  "info": {
+    "_postman_id": "b9f1e7b2-6d0d-4b31-8e77-8a8f6db2d1aa",
+    "name": "Reddit-like (admin & user)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Auth - Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/auth/me"
+      }
+    },
+    {
+      "name": "Auth - Update profile",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newname\",\n  \"bio\": \"Ceci est ma bio\"\n}"
+        },
+        "url": "{{base_url}}/auth/me"
+      }
+    },
+    {
+      "name": "Auth - Set username",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"username\": \"monpseudo\" }" },
+        "url": "{{base_url}}/auth/profile"
+      }
+    },
+    {
+      "name": "Posts - Feed",
+      "request": { "method": "GET", "url": "{{base_url}}/posts" }
+    },
+    {
+      "name": "Posts - Detail",
+      "request": { "method": "GET", "url": "{{base_url}}/posts/{{post_id}}" }
+    },
+    {
+      "name": "Posts - Vote",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"value\": 1 }" },
+        "url": "{{base_url}}/posts/{{post_id}}/vote"
+      }
+    },
+    {
+      "name": "Posts - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/posts/{{post_id}}"
+      }
+    },
+    {
+      "name": "Comments - List for post",
+      "request": { "method": "GET", "url": "{{base_url}}/posts/{{post_id}}/comments" }
+    },
+    {
+      "name": "Comments - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"content\": \"Mon commentaire\" }" },
+        "url": "{{base_url}}/posts/{{post_id}}/comments"
+      }
+    },
+    {
+      "name": "Comments - Vote",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"value\": 1 }" },
+        "url": "{{base_url}}/comments/{{comment_id}}/vote"
+      }
+    },
+    {
+      "name": "Comments - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/comments/{{comment_id}}"
+      }
+    },
+    {
+      "name": "Subreddits - List",
+      "request": { "method": "GET", "url": "{{base_url}}/subreddits" }
+    },
+    {
+      "name": "Subreddits - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"name\": \"demo-sub\", \"description\": \"desc\" }" },
+        "url": "{{base_url}}/subreddits"
+      }
+    },
+    {
+      "name": "Subreddits - Detail",
+      "request": { "method": "GET", "url": "{{base_url}}/subreddits/{{sub_id}}" }
+    },
+    {
+      "name": "Subreddits - Posts list",
+      "request": { "method": "GET", "url": "{{base_url}}/subreddits/{{sub_id}}/posts" }
+    },
+    {
+      "name": "Subreddits - Create post in sub",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"title\": \"Mon post\", \"content\": \"contenu\", \"type\": \"text\" }" },
+        "url": "{{base_url}}/subreddits/{{sub_id}}/posts"
+      }
+    },
+    {
+      "name": "Subreddits - Join",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/subreddits/{{sub_id}}/join"
+      }
+    },
+    {
+      "name": "Subreddits - Leave",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/subreddits/{{sub_id}}/leave"
+      }
+    },
+    {
+      "name": "Subreddits - Members (owner/mod)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/subreddits/{{sub_id}}/members"
+      }
+    },
+    {
+      "name": "Subreddits - Change member role (owner)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"role\": \"mod\" }" },
+        "url": "{{base_url}}/subreddits/{{sub_id}}/members/{{user_id}}/role"
+      }
+    },
+    {
+      "name": "Subreddits - Delete (owner/admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/subreddits/{{sub_id}}"
+      }
+    },
+    {
+      "name": "Admin - List users",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+        ],
+        "url": "{{base_url}}/admin/users"
+      }
+    },
+    {
+      "name": "Admin - Set user role",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"role\": \"member\" }" },
+        "url": "{{base_url}}/admin/users/{{user_id}}/role"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:4000/api" },
+    { "key": "access_token", "value": "" },
+    { "key": "post_id", "value": "" },
+    { "key": "sub_id", "value": "" },
+    { "key": "user_id", "value": "" },
+    { "key": "comment_id", "value": "" }
+  ]
+}
+
