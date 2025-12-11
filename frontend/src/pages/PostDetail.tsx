@@ -31,13 +31,15 @@ export function PostDetail(): JSX.Element {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const run = async () => {
+    const init = async () => {
       try {
         if (!id) return;
         const p = await api.get<DbPost>(`/posts/${id}`);
         setPost(p);
+
         const c = await api.get<DbComment[]>(`/posts/${id}/comments`);
         setComments(c);
+
         const subs = await api.get<DbSub[]>(`/subreddits`);
         const match = subs.find((s) => s.id === p.subreddit_id);
         setSub(match ?? null);
@@ -50,7 +52,6 @@ export function PostDetail(): JSX.Element {
             author_id: mp.author,
             title: mp.title,
             content: mp.content,
-            media_urls: mp.media_urls,
             score: 0,
             created_at: mp.createdAt,
           });
@@ -72,7 +73,7 @@ export function PostDetail(): JSX.Element {
         setLoading(false);
       }
     };
-    void run();
+    void init();
   }, [id]);
 
   const score = useMemo(() => (s?: number) => s ?? 0, []);
@@ -101,6 +102,7 @@ export function PostDetail(): JSX.Element {
       <section className="card">
         <h3>Commentaires</h3>
         {loading && <p className="meta">Chargement...</p>}
+
         {!loading && comments.length === 0 && <p className="meta">Aucun commentaire</p>}
         {comments.map((c) => (
           <article key={c.id} className="comment">

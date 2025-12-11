@@ -46,7 +46,7 @@ export function Subreddit(): JSX.Element {
             author_id: p.author,
             title: p.title,
             content: p.content,
-            media_urls: p.media_urls,
+            // media_urls: p.media_urls,
             score: 0,
             created_at: p.createdAt,
           }));

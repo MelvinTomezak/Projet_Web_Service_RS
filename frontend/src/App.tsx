@@ -108,10 +108,6 @@ export function App(): JSX.Element {
           {loading ? "..." : mode === "login" ? "Se connecter" : "Créer un compte"}
         </button>
 
-        <button className="auth-secondary" onClick={logout}>
-          Se déconnecter
-        </button>
-
         {message && <p className="auth-message">{message}</p>}
         <p className="meta">
           Le token JWT Supabase sera stocké côté client (session), et envoyé en Bearer sur l’API

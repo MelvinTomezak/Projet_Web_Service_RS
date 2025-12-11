@@ -18,27 +18,26 @@ type DbPost = {
 
 type DbSub = { id: string; name: string; description?: string };
 
-export function Home(): JSX.Element {
+export function Home() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<DbPost[]>([]);
   const [subs, setSubs] = useState<DbSub[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const run = async () => {
+    const init = async () => {
       try {
         const [p, s] = await Promise.all([api.get<DbPost[]>("/posts"), api.get<DbSub[]>("/subreddits")]);
         setPosts(p);
         setSubs(s);
       } catch {
-        // fallback mock si API KO
         setPosts([]);
         setSubs([]);
       } finally {
         setLoading(false);
       }
     };
-    void run();
+    void init();
   }, []);
 
   const subsById = useMemo(() => {
@@ -55,8 +54,6 @@ export function Home(): JSX.Element {
         author_id: p.author,
         title: p.title,
         content: p.content,
-        type: p.type ?? "text",
-        media_urls: p.media_urls,
         created_at: p.createdAt,
         score: 0,
       }));
@@ -84,11 +81,6 @@ export function Home(): JSX.Element {
                   {p.title}
                 </Link>
                 <p className="content">{p.content}</p>
-                {p.media_urls?.[0] && (
-                  <div style={{ marginTop: 8 }}>
-                    <img src={p.media_urls[0]} alt="media" style={{ maxWidth: "100%", borderRadius: 8 }} />
-                  </div>
-                )}
                 <div className="meta">Score : {p.score ?? 0}</div>
               </article>
             );
