@@ -10,10 +10,17 @@ export const postsRouter = Router();
  * @openapi
  * /api/posts/{id}:
  *   get:
- *     summary: Détail d'un post
+ *     summary: Get post detail
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  * /api/posts:
  *   get:
- *     summary: Feed global des posts
+ *     summary: Global posts feed
  * /api/posts/{id}/vote:
  *   post:
  *     summary: Voter sur un post (-1,0,1)
@@ -41,6 +48,13 @@ postsRouter.get("/posts", async (_req, res) => {
  *   delete:
  *     summary: Supprimer un post (auteur)
  *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  */
 postsRouter.delete("/posts/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
@@ -64,6 +78,13 @@ postsRouter.delete("/posts/:id", requireAuth, async (req: AuthenticatedRequest, 
  *   post:
  *     summary: Voter sur un post
  *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:

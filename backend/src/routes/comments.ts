@@ -12,6 +12,13 @@ export const commentsRouter = Router();
  * /api/posts/{id}/comments:
  *   get:
  *     summary: List comments for a post
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  */
 commentsRouter.get("/posts/:id/comments", async (req, res) => {
   const { id } = req.params;
@@ -28,13 +35,20 @@ commentsRouter.get("/posts/:id/comments", async (req, res) => {
   res.json(mapped);
 });
 
-// Créer un commentaire
+// Create a comment
 /**
  * @openapi
  * /api/posts/{id}/comments:
  *   post:
  *     summary: Create a comment
  *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -67,52 +81,6 @@ commentsRouter.post(
   },
 );
 
-// Vote commentaire
-/**
- * @openapi
- * /api/comments/{id}/vote:
- *   post:
- *     summary: Voter sur un commentaire (-1,0,1 ; 0 annule son propre vote)
- *     security: [{ bearerAuth: [] }]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               value:
- *                 type: integer
- *                 enum: [-1, 0, 1]
- *           example:
- *             value: -1
- */
-commentsRouter.post(
-  "/comments/:id/vote",
-  requireAuth,
-  validate(voteCommentSchema),
-  async (req: AuthenticatedRequest, res) => {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ code: "UNAUTHORIZED", message: "Not authenticated" });
-    const { id } = req.params;
-    const { value } = req.body as { value: number };
-    if (value === 0) {
-      const { error: delError } = await supabase
-        .from("comment_votes")
-        .delete()
-        .eq("user_id", userId)
-        .eq("comment_id", id);
-      if (delError) return res.status(400).json({ code: "VOTE_COMMENT_ERROR", message: delError.message });
-    } else {
-      const { error } = await supabase
-        .from("comment_votes")
-        .upsert({ user_id: userId, comment_id: id, value }, { onConflict: "user_id,comment_id" });
-      if (error) return res.status(400).json({ code: "VOTE_COMMENT_ERROR", message: error.message });
-    }
-    res.json({ ok: true });
-  },
-);
-
 // Supprimer un commentaire (auteur ou admin)
 /**
  * @openapi
@@ -120,6 +88,13 @@ commentsRouter.post(
  *   delete:
  *     summary: Supprimer un commentaire (auteur ou admin)
  *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  */
 commentsRouter.delete(
   "/comments/:id",

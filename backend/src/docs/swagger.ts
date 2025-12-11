@@ -7,12 +7,26 @@ const swaggerDefinition = {
   info: {
     title: "Reddit-like API",
     version: "0.1.0",
-    description: "API Express + Supabase pour un réseau social type Reddit.",
+    description: "Express + Supabase backend for a Reddit-like social network.",
   },
   servers: [
     {
+      url: "http://{host}:{port}",
+      description: "Template server",
+      variables: {
+        host: {
+          default: "localhost",
+          description: "API host",
+        },
+        port: {
+          default: "4000",
+          description: "API port",
+        },
+      },
+    },
+    {
       url: "http://localhost:4000",
-      description: "Développement local",
+      description: "Local development",
     },
   ],
   components: {
@@ -21,6 +35,7 @@ const swaggerDefinition = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
+        description: "Paste user access_token (no 'Bearer ' prefix needed in Swagger UI)",
       },
     },
   },
